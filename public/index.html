@@ -38,6 +38,10 @@
     <div class="row justify-content-center">
       <div class="col-md-9">
         <div class="card p-4 border-0 bg-body-secondary">
+          <div>
+            <div id="systeminformationCPU"></div>
+            <div id="systeminformationMEM"></div>
+          </div>
           <h1 class="text-center mb-4">WhatsApp API</h1>
 
           <div class="accordion accordion-flush" id="accordionFlushExample">
@@ -199,6 +203,10 @@
           document.getElementById(
             "connectBtn"
           ).innerHTML = `<button class="btn btn-success w-100" onclick="showQrCode()">Conectar</button>`;
+        } else if (data.type === 'systeminformation') {
+          const { cpu, mem } = data.data
+          document.getElementById("systeminformationCPU").textContent = cpu
+          document.getElementById("systeminformationMEM").textContent = mem
         }
       };
 
@@ -272,20 +280,20 @@
     /*
 // Mostrar QR Code no modal
 function showQrCode() {
-    qrModalInstance = new bootstrap.Modal(document.getElementById('qrModal'));
-    qrModalInstance.show();
+  qrModalInstance = new bootstrap.Modal(document.getElementById('qrModal'));
+  qrModalInstance.show();
  
-    // Limpar qualquer QR Code anterior
-    document.getElementById('qrCode').style.display = 'none';
-    document.getElementById('loadingMessage').style.display = 'block';
+  // Limpar qualquer QR Code anterior
+  document.getElementById('qrCode').style.display = 'none';
+  document.getElementById('loadingMessage').style.display = 'block';
  
-    // Se já tivermos o QR Code, exibir imediatamente
-    if (lastQrCodeData) {
-        document.getElementById('loadingMessage').style.display = 'none';
-        const qrCode = document.getElementById('qrCode');
-        qrCode.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(lastQrCodeData)}`;
-        qrCode.style.display = 'block';
-    }
+  // Se já tivermos o QR Code, exibir imediatamente
+  if (lastQrCodeData) {
+      document.getElementById('loadingMessage').style.display = 'none';
+      const qrCode = document.getElementById('qrCode');
+      qrCode.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(lastQrCodeData)}`;
+      qrCode.style.display = 'block';
+  }
 }*/
     function showQrCode() {
       const qrCode = document.getElementById("qrCode");
