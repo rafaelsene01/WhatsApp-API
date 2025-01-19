@@ -1,7 +1,13 @@
-FROM debian:12
+FROM node:14-slim
 
 # Definir o diretório de trabalho
-WORKDIR /opt
+WORKDIR /app
+
+ARG API_PORT
+ARG MONGO_URL
+
+ENV API_PORT=${API_PORT}
+ENV MONGO_URL=${MONGO_URL}
 
 # Atualizar pacotes e instalar dependências
 RUN apt update && \
@@ -12,9 +18,13 @@ RUN apt update && \
     lsb-release xdg-utils libasound2 libdrm2 libxcomposite1 libxrandr2 \
     libgbm1
 
-RUN git clone https://github.com/remontti/RR-WhatsApp-API.git && \
-    cd RR-WhatsApp-API && \
-    npm install
+COPY package*.json .
+
+RUN npm i --silent
+
+COPY . .
+
+EXPOSE ${API_PORT}
 
 # Definir o comando para rodar o aplicativo
-CMD ["node", "/opt/RR-WhatsApp-API/index.js"]
+CMD npm start

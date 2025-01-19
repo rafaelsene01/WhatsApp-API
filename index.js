@@ -1,4 +1,6 @@
+require("dotenv").config();
 const express = require("express");
+const http = require("http");
 const fileUpload = require("express-fileupload");
 const {
   Client,
@@ -8,16 +10,19 @@ const {
 } = require("whatsapp-web.js");
 const fs = require("fs");
 const path = require("path");
-const WebSocket = require("ws");
-const QRCode = require("qrcode");
-const ipRangeCheck = require("ip-range-check");
+const { Server } = require("socket.io");
 const si = require("systeminformation");
 const { imageSync } = require("qr-image");
 
 const app = express();
-const port = 3001;
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+  },
+});
 
-const allowedIPs = ["192.168.0.0/16", "127.0.0.1", "::1"];
+const port = process.env.API_PORT || 3001;
 
 function formatBytes(bytes, decimals = 2) {
   if (!+bytes) return "0 Bytes";
@@ -51,17 +56,6 @@ const getMEM = async () => {
   }
 };
 
-app.use((req, res, next) => {
-  const clientIP =
-    req.headers["x-forwarded-for"] || req.connection.remoteAddress;
-  const cleanedIP = clientIP.replace("::ffff:", "");
-  if (ipRangeCheck(cleanedIP, allowedIPs)) {
-    next();
-  } else {
-    res.status(403).send("Acesso negado.");
-  }
-});
-
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static("public"));
@@ -70,38 +64,19 @@ app.use(fileUpload());
 let qrCodeData = null;
 let authenticated = false;
 
-const wss = new WebSocket.Server({ port: 8080 });
-
 setInterval(async () => {
   const cpu = await getCPU();
   const mem = await getMEM();
-  wss.clients.forEach(function each(wsClient) {
-    if (wsClient.readyState === WebSocket.OPEN) {
-      wsClient.send(
-        JSON.stringify({
-          type: "systeminformation",
-          data: {
-            cpu,
-            mem,
-          },
-        })
-      );
-    }
+  io.emit("systeminformation", {
+    cpu,
+    mem,
   });
 }, 2500);
 
-wss.on("connection", function connection(ws, req) {
-  const clientIP =
-    req.headers["x-forwarded-for"] || req.connection.remoteAddress;
-  const cleanedIP = clientIP.replace("::ffff:", "");
-  if (ipRangeCheck(cleanedIP, allowedIPs)) {
-    console.log(`Cliente conectado via WebSocket: ${cleanedIP}`);
-    if (qrCodeData) {
-      ws.send(JSON.stringify({ type: "qr", data: qrCodeData }));
-    }
-  } else {
-    console.log(`Conexão WebSocket negada para o IP: ${cleanedIP}`);
-    ws.terminate();
+io.on("connection", function connection(_) {
+  console.log(`Cliente conectado via WebSocket`);
+  if (qrCodeData) {
+    io.emit("qr", qrCodeData);
   }
 });
 
@@ -127,11 +102,7 @@ function registerClientEvents() {
     const img = imageSync(qr, { type: "svg" });
     qrCodeData = "data:image/svg+xml;base64," + btoa(img);
     console.log("QR Code gerado.");
-    wss.clients.forEach(function each(wsClient) {
-      if (wsClient.readyState === WebSocket.OPEN) {
-        wsClient.send(JSON.stringify({ type: "qr", data: qrCodeData }));
-      }
-    });
+    io.emit("qr", qrCodeData);
   });
 
   client.on("authenticated", () => {
@@ -145,22 +116,14 @@ function registerClientEvents() {
     const info = await client.getState();
     console.log("Estado do cliente:", info);
     authenticated = true;
-    wss.clients.forEach(function each(wsClient) {
-      if (wsClient.readyState === WebSocket.OPEN) {
-        wsClient.send(JSON.stringify({ type: "authenticated" }));
-      }
-    });
+    io.emit("authenticated");
   });
 
   client.on("disconnected", (reason) => {
     console.log("Motivo da desconexão:", reason);
     authenticated = false;
     qrCodeData = null;
-    wss.clients.forEach(function each(wsClient) {
-      if (wsClient.readyState === WebSocket.OPEN) {
-        wsClient.send(JSON.stringify({ type: "disconnected" }));
-      }
-    });
+    io.emit("disconnected");
   });
 
   client.on("auth_failure", (msg) => {
@@ -174,6 +137,7 @@ function registerClientEvents() {
   client.on("loading_screen", (percent, message) => {
     console.log(`Carregando (${percent}%): ${message}`);
   });
+
   /*	
           // Adicione este evento para autoresponder mensagens
           client.on('message', async (msg) => {
@@ -187,17 +151,6 @@ function registerClientEvents() {
               }
           });
       */
-  // Adicione este evento para mensagem de testes
-  client.on("message", async (msg) => {
-    console.log(`Mensagem recebida de ${msg.from}: ${msg.body}`);
-
-    // Verifique se a mensagem é de texto
-    if (msg.type === "chat" && msg.body.toLowerCase().trim() === "!ping") {
-      const response = "PONG";
-      await client.sendMessage(msg.from, response);
-      console.log(`Resposta automática enviada para ${msg.from}`);
-    }
-  });
 
   // Adicione este evento para recusar chamadas e responder
   client.on("call", async (call) => {
@@ -229,15 +182,13 @@ app.get("/api/qr", async (req, res) => {
   } else {
     if (qrCodeData) {
       try {
-        const qrCodeImage = await QRCode.toDataURL(qrCodeData);
-        const base64Data = qrCodeImage.replace(/^data:image\/png;base64,/, "");
-        const imgBuffer = Buffer.from(base64Data, "base64");
+        const svgBuffer = Buffer.from(qrCodeData.split(",")[1], "base64");
 
         res.writeHead(200, {
-          "Content-Type": "image/png",
-          "Content-Length": imgBuffer.length,
+          "Content-Type": "image/svg+xml",
+          "Content-Disposition": "inline",
         });
-        res.end(imgBuffer);
+        res.end(svgBuffer);
       } catch (err) {
         console.error("Erro ao gerar QR Code:", err);
         res
@@ -513,6 +464,6 @@ app.get("/api/sendMessage/:recipient/:message", async (req, res) => {
   }
 });
 
-app.listen(port, () => {
+server.listen(port, () => {
   console.log(`API rodando na porta ${port}`);
 });
