@@ -12,10 +12,12 @@
     "dotenv": "^16.4.7",
     "express": "^4.18.2",
     "express-fileupload": "^1.4.0",
+    "mongoose": "^8.9.5",
     "qr-image": "^3.2.0",
     "socket.io": "^4.8.1",
     "systeminformation": "^5.25.11",
-    "whatsapp-web.js": "latest"
+    "whatsapp-web.js": "latest",
+    "wwebjs-mongo": "^1.1.0"
   },
   "keywords": []
 }

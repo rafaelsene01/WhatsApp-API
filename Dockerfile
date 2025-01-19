@@ -5,9 +5,11 @@ WORKDIR /app
 
 ARG API_PORT
 ARG MONGO_URL
+ARG CLIENT_ID
 
 ENV API_PORT=${API_PORT}
 ENV MONGO_URL=${MONGO_URL}
+ENV CLIENT_ID=${CLIENT_ID}
 
 # Atualizar pacotes e instalar dependências
 RUN apt update && \

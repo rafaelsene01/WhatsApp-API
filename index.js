@@ -13,6 +13,8 @@ const path = require("path");
 const { Server } = require("socket.io");
 const si = require("systeminformation");
 const { imageSync } = require("qr-image");
+const mongoose = require("mongoose");
+const { MongoStore } = require("wwebjs-mongo");
 
 const app = express();
 const server = http.createServer(app);
@@ -80,11 +82,26 @@ io.on("connection", function connection(_) {
   }
 });
 
+io.on("systeminformation", function connection(_) {
+  console.log("oi");
+});
+
 let client;
 
-function createClient() {
+async function createClient() {
+  let authStrategy;
+
+  if (process.env.MONGO_URL) {
+    await mongoose.connect(process.env.MONGO_URL);
+    const store = new MongoStore({ mongoose: mongoose });
+    authStrategy = new RemoteAuth({
+      clientId: process.env.CLIENT_ID || "default",
+      store,
+      backupSyncIntervalMs: 300000,
+    });
+  } else authStrategy = new LocalAuth({ dataPath: "./session" });
   client = new Client({
-    authStrategy: new LocalAuth({ dataPath: "./session" }),
+    authStrategy,
     puppeteer: {
       headless: true,
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
@@ -138,6 +155,10 @@ function registerClientEvents() {
     console.log(`Carregando (${percent}%): ${message}`);
   });
 
+  client.on("remote_session_saved", (percent, message) => {
+    console.log(`Whatsapp salvo remotamente`);
+  });
+
   /*	
           // Adicione este evento para autoresponder mensagens
           client.on('message', async (msg) => {
@@ -169,8 +190,10 @@ function registerClientEvents() {
   });
 }
 
-createClient();
-client.initialize();
+(async () => {
+  await createClient();
+  client.initialize();
+})();
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
@@ -213,6 +236,9 @@ app.get("/api/disconnect", async (req, res) => {
     console.log("Destruindo o cliente...");
     await client.destroy();
     console.log("Cliente destruído.");
+
+    if (process.env.MONGO_URL)
+      await store.delete({ session: process.env.CLIENT_ID || "default" });
 
     client = null;
     qrCodeData = null;

@@ -7,6 +7,7 @@ services:
       args:
         MONGO_URL: "${MONGO_URL}"
         API_PORT: "${API_PORT}"
+        CLIENT_ID: "${CLIENT_ID}"
     volumes:
       - .:/app/
       - /app/node_modules
@@ -15,3 +16,4 @@ services:
     environment:
       - MONGO_URL=aa
       - API_PORT=3001
+      - CLIENT_ID=
