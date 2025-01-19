@@ -1,12 +1,18 @@
 const express = require("express");
 const fileUpload = require("express-fileupload");
-const { Client, LocalAuth, MessageMedia } = require("whatsapp-web.js");
+const {
+  Client,
+  LocalAuth,
+  MessageMedia,
+  RemoteAuth,
+} = require("whatsapp-web.js");
 const fs = require("fs");
 const path = require("path");
 const WebSocket = require("ws");
 const QRCode = require("qrcode");
 const ipRangeCheck = require("ip-range-check");
 const si = require("systeminformation");
+const { imageSync } = require("qr-image");
 
 const app = express();
 const port = 3001;
@@ -118,11 +124,12 @@ function registerClientEvents() {
   client.removeAllListeners();
 
   client.on("qr", (qr) => {
-    qrCodeData = qr;
+    const img = imageSync(qr, { type: "svg" });
+    qrCodeData = "data:image/svg+xml;base64," + btoa(img);
     console.log("QR Code gerado.");
     wss.clients.forEach(function each(wsClient) {
       if (wsClient.readyState === WebSocket.OPEN) {
-        wsClient.send(JSON.stringify({ type: "qr", data: qr }));
+        wsClient.send(JSON.stringify({ type: "qr", data: qrCodeData }));
       }
     });
   });

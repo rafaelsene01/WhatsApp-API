@@ -191,9 +191,7 @@
           if (qrModal.classList.contains("show")) {
             document.getElementById("loadingMessage").style.display = "none";
             const qrCode = document.getElementById("qrCode");
-            qrCode.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(
-              lastQrCodeData
-            )}`;
+            qrCode.src = lastQrCodeData;
             qrCode.style.display = "block";
           }
         } else if (data.type === "disconnected") {
@@ -277,24 +275,7 @@
       );
       messageModal.show();
     }
-    /*
-// Mostrar QR Code no modal
-function showQrCode() {
-  qrModalInstance = new bootstrap.Modal(document.getElementById('qrModal'));
-  qrModalInstance.show();
- 
-  // Limpar qualquer QR Code anterior
-  document.getElementById('qrCode').style.display = 'none';
-  document.getElementById('loadingMessage').style.display = 'block';
- 
-  // Se já tivermos o QR Code, exibir imediatamente
-  if (lastQrCodeData) {
-      document.getElementById('loadingMessage').style.display = 'none';
-      const qrCode = document.getElementById('qrCode');
-      qrCode.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(lastQrCodeData)}`;
-      qrCode.style.display = 'block';
-  }
-}*/
+
     function showQrCode() {
       const qrCode = document.getElementById("qrCode");
       const loadingMessage = document.getElementById("loadingMessage");
@@ -304,9 +285,7 @@ function showQrCode() {
 
       if (lastQrCodeData) {
         loadingMessage.style.display = "none";
-        qrCode.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(
-          lastQrCodeData
-        )}`;
+        qrCode.src = lastQrCodeData
         qrCode.style.display = "block";
       }
 
