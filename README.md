@@ -1,3 +1,5 @@
+V1 - Fork com alguns ajustes
+
 # RR-WhatsApp-API
 
 https://blog.remontti.com.br/8109
@@ -99,11 +101,7 @@ nano /opt/RR-WhatsApp-API/index.js
 Exemplo de configuração de IPs permitidos:
 
 ```javascript
-const allowedIPs = [
-    '192.168.0.0/16',
-    '127.0.0.1',
-    '::1',
-];
+const allowedIPs = ["192.168.0.0/16", "127.0.0.1", "::1"];
 ```
 
 Se desejar, altere também a porta da aplicação:
@@ -264,7 +262,7 @@ curl -X POST http://SEU_SERVIDOR:3001/api/send \
 
 Faça uma requisição **GET**
 
- para:
+para:
 
 ```
 http://SEU_SERVIDOR:3001/api/sendMessage/:recipient/:message
@@ -313,7 +311,7 @@ Para executar a aplicação como um serviço no Debian 12, siga os passos abaixo
    [Unit]
    Description=RR WhatsApp API
    After=network.target
-   
+
    [Service]
    ExecStart=/usr/bin/node /opt/RR-WhatsApp-API/index.js
    WorkingDirectory=/opt/RR-WhatsApp-API
@@ -323,7 +321,7 @@ Para executar a aplicação como um serviço no Debian 12, siga os passos abaixo
    ExecReload=/usr/bin/killall -9 rr-whatsapp-api
    KillMode=process
    RestartSec=10
-   
+
    [Install]
    WantedBy=multi-user.target
    ```
@@ -355,12 +353,12 @@ Para executar a aplicação como um serviço no Debian 12, siga os passos abaixo
 ## Contribuições
 
 Contribuições são bem-vindas! Sinta-se à vontade para abrir issues e pull requests. (Se vou responder ou modificar a resposta é provavelmente não.)
-A programação é credito do Chat GTP, pois eu não sei node! Mas nem por isso sou c*zão, de não compartilhar! 
+A programação é credito do Chat GTP, pois eu não sei node! Mas nem por isso sou c\*zão, de não compartilhar!
 
-## Bônus Zabbix 
-Deixei o arquivo Zabbix-Midia-Whatsapp-RR.yaml para que você possa usar para disparo de aviso no Zabbix, só importar e ajustar. 
+## Bônus Zabbix
+
+Deixei o arquivo Zabbix-Midia-Whatsapp-RR.yaml para que você possa usar para disparo de aviso no Zabbix, só importar e ajustar.
 
 ---
 
 **Nota:** Este projeto utiliza o `whatsapp-web.js`, que é uma biblioteca não oficial. O uso de bibliotecas não oficiais pode violar os termos de serviço do WhatsApp. Utilize por sua conta e risco.
-
